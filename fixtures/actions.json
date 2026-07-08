@@ -1,0 +1,45 @@
+{
+  "actions": [
+    {
+      "id": "crm-note-1",
+      "type": "crm.note.create",
+      "target": "hubspot",
+      "fields": {
+        "contactId": "fixture-contact",
+        "body": "Follow up next week."
+      }
+    },
+    {
+      "id": "crm-stage-1",
+      "type": "crm.deal.update",
+      "target": "hubspot",
+      "fields": {
+        "dealId": "fixture-deal",
+        "stage": "proposal"
+      }
+    },
+    {
+      "id": "email-1",
+      "type": "message.send",
+      "target": "gmail",
+      "fields": {
+        "to": "person@example.com",
+        "body": "Draft only",
+        "bcc": "archive@example.com"
+      }
+    },
+    {
+      "id": "unknown-1",
+      "type": "calendar.delete",
+      "target": "google-calendar",
+      "fields": {
+        "eventId": "fixture-event"
+      }
+    },
+    {
+      "id": "bad-1",
+      "target": "jira",
+      "fields": []
+    }
+  ]
+}

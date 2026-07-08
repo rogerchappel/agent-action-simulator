@@ -1,0 +1,27 @@
+{
+  "rules": [
+    {
+      "type": "crm.note.create",
+      "target": "hubspot",
+      "outcome": "allowed",
+      "reason": "Internal note creation is allowed in dry-run fixture policy"
+    },
+    {
+      "type": "crm.deal.update",
+      "target": "hubspot",
+      "outcome": "needs_approval",
+      "approval": "sales-ops-review",
+      "reason": "Deal stage changes require sales operations approval"
+    },
+    {
+      "type": "message.send",
+      "target": "*",
+      "outcome": "needs_approval",
+      "approval": "human-send-approval",
+      "blockedFields": [
+        "bcc"
+      ],
+      "reason": "Outbound messages require explicit human send approval"
+    }
+  ]
+}
