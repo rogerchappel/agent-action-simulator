@@ -6,10 +6,10 @@ ship
 
 ## Verification plan
 
-- `npm test`
-- `npm run check`
-- `npm run smoke`
-- `node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format json`
+- `npm test` - pass, 2 tests
+- `npm run check` - pass
+- `npm run smoke` - pass, markdown report covers all outcomes
+- `node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format json` - pass
 
 ## Dry-run guarantees
 
