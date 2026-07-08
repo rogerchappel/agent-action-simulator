@@ -1,0 +1,32 @@
+{
+  "name": "agent-action-simulator",
+  "version": "0.1.0",
+  "description": "Simulate planned connector actions and produce approval-boundary dry-run reports.",
+  "type": "module",
+  "bin": {
+    "agent-action-simulator": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/*.js test/*.test.js",
+    "smoke": "node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format markdown"
+  },
+  "keywords": [
+    "agents",
+    "connectors",
+    "dry-run",
+    "approval",
+    "simulation"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "src",
+    "docs",
+    "fixtures",
+    "SKILL.md",
+    "README.md"
+  ]
+}
