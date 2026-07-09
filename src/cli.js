@@ -3,12 +3,25 @@ import { readFile } from 'node:fs/promises';
 import { simulatePlan } from './simulate.js';
 import { formatJsonReport, formatMarkdownReport } from './report.js';
 
+const usage = 'usage: agent-action-simulator <actions.json> --policy <policy.json> [--format json|markdown]';
+
 async function main(argv) {
   const [planPath, ...rest] = argv;
   const flags = parseFlags(rest);
 
+  if (planPath === '--help' || flags.help) {
+    process.stdout.write(`${usage}\n`);
+    return;
+  }
+
+  if (planPath === '--version' || flags.version) {
+    const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+    process.stdout.write(`${packageJson.version}\n`);
+    return;
+  }
+
   if (!planPath || !flags.policy) {
-    throw new Error('usage: agent-action-simulator <actions.json> --policy <policy.json> [--format json|markdown]');
+    throw new Error(usage);
   }
 
   const plan = JSON.parse(await readFile(planPath, 'utf8'));

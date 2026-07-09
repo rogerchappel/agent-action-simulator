@@ -9,7 +9,9 @@
   "scripts": {
     "test": "node --test",
     "check": "node --check src/*.js test/*.test.js",
-    "smoke": "node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format markdown"
+    "smoke": "node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format markdown",
+    "package:smoke": "npm pack --dry-run",
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
   },
   "keywords": [
     "agents",
@@ -27,7 +29,9 @@
     "docs",
     "fixtures",
     "SKILL.md",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
   ],
   "repository": {
     "type": "git",
