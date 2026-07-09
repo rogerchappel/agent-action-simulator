@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { simulatePlan } from '../src/simulate.js';
 import { formatMarkdownReport } from '../src/report.js';
 
@@ -43,4 +44,14 @@ test('renders markdown reviewer report', () => {
 
   assert.match(formatMarkdownReport(result), /# Agent Action Simulation/u);
   assert.match(formatMarkdownReport(result), /a1: allowed/u);
+});
+
+test('cli exposes help and version metadata', () => {
+  const help = spawnSync(process.execPath, ['src/cli.js', '--help'], { encoding: 'utf8' });
+  assert.equal(help.status, 0);
+  assert.match(help.stdout, /agent-action-simulator <actions\.json>/u);
+
+  const version = spawnSync(process.execPath, ['src/cli.js', '--version'], { encoding: 'utf8' });
+  assert.equal(version.status, 0);
+  assert.match(version.stdout, /^0\.1\.0\n$/u);
 });
