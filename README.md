@@ -9,6 +9,7 @@ npm install
 npm test
 npm run smoke
 node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format json
+npm run release:check
 ```
 
 ## Install
@@ -42,3 +43,8 @@ The package never loads credentials and never calls a connector. It only reads l
 ```sh
 npm run release:check
 ```
+
+`npm run release:readiness` checks package metadata, the CLI bin target,
+support docs, release fixtures, CI presence, and the npm files allowlist.
+`npm run package:smoke` dry-runs the npm tarball and fails if release-critical
+files would be omitted.

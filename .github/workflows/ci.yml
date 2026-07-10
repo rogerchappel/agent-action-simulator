@@ -28,3 +28,6 @@ jobs:
 
       - name: Run CLI smoke
         run: npm run smoke
+
+      - name: Run package smoke
+        run: npm run package:smoke
