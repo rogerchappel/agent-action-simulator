@@ -9,9 +9,11 @@
   "scripts": {
     "test": "node --test",
     "check": "node --check src/*.js test/*.test.js",
+    "lint": "npm run check",
     "smoke": "node src/cli.js --help >/dev/null && node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format markdown",
     "package:smoke": "node scripts/package-smoke.mjs",
-    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
+    "release:readiness": "node scripts/validate-release-readiness.mjs",
+    "release:check": "npm run release:readiness && npm run check && npm test && npm run smoke && npm run package:smoke"
   },
   "keywords": [
     "agents",
@@ -39,5 +41,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rogerchappel/agent-action-simulator.git"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/agent-action-simulator/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/agent-action-simulator#readme"
 }
