@@ -28,6 +28,9 @@ async function main(argv) {
   const policy = JSON.parse(await readFile(flags.policy, 'utf8'));
   const simulation = simulatePlan(plan, policy);
   const format = flags.format ?? 'markdown';
+  if (!['json', 'markdown'].includes(format)) {
+    throw new Error('--format must be json or markdown');
+  }
   process.stdout.write(format === 'json' ? formatJsonReport(simulation) : formatMarkdownReport(simulation));
 }
 
@@ -36,16 +39,18 @@ function parseFlags(args) {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (!arg.startsWith('--')) {
-      continue;
+      throw new Error(`unexpected argument: ${arg}`);
     }
     const key = arg.slice(2);
+    if (!['policy', 'format'].includes(key)) {
+      throw new Error(`unknown option: ${arg}`);
+    }
     const next = args[index + 1];
     if (!next || next.startsWith('--')) {
-      flags[key] = true;
-    } else {
-      flags[key] = next;
-      index += 1;
+      throw new Error(`${arg} requires a value`);
     }
+    flags[key] = next;
+    index += 1;
   }
   return flags;
 }
