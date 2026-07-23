@@ -1,28 +1,46 @@
 const OUTCOMES = new Set(['allowed', 'needs_approval', 'blocked']);
 
 export function simulatePlan(plan, policy) {
+  validatePolicy(policy);
   const actions = Array.isArray(plan?.actions) ? plan.actions : [];
+  const results = actions.map((action, index) => classifyValidatedAction(action, policy.rules, index));
   return {
-    summary: summarize(actions.map((action, index) => classifyAction(action, policy, index))),
-    results: actions.map((action, index) => classifyAction(action, policy, index))
+    summary: summarize(results),
+    results
   };
 }
 
 export function classifyAction(action, policy, index = 0) {
+  validatePolicy(policy);
+  return classifyValidatedAction(action, policy.rules, index);
+}
+
+export function validatePolicy(policy) {
+  if (!isPlainObject(policy)) {
+    throw new TypeError('Policy must be an object');
+  }
+  if (!Array.isArray(policy.rules)) {
+    throw new TypeError('Policy rules must be an array');
+  }
+
+  policy.rules.forEach(validateRule);
+}
+
+function classifyValidatedAction(action, rules, index) {
   const malformed = validateActionShape(action, index);
   if (malformed) {
     return malformed;
   }
 
-  const rule = findRule(action, policy);
-  if (!rule) {
+  const resolution = resolveRule(action, rules);
+  if (!resolution) {
     return blocked(action, index, 'No matching policy rule');
   }
-
-  if (!OUTCOMES.has(rule.outcome)) {
-    return blocked(action, index, `Invalid policy outcome: ${rule.outcome}`);
+  if (resolution.conflict) {
+    return blocked(action, index, `Conflicting policy rules at indexes ${resolution.indexes.join(', ')}`);
   }
 
+  const { rule } = resolution;
   const riskyFields = findRiskyFields(action, rule);
   if (riskyFields.length > 0) {
     return {
@@ -48,6 +66,62 @@ export function classifyAction(action, policy, index = 0) {
   };
 }
 
+function validateRule(rule, index) {
+  if (!isPlainObject(rule)) {
+    throw new TypeError(`Policy rule ${index} must be an object`);
+  }
+
+  validateSelector(rule.type, 'type', index);
+  validateSelector(rule.target, 'target', index);
+
+  if (!OUTCOMES.has(rule.outcome)) {
+    throw new TypeError(`Policy rule ${index} outcome must be allowed, needs_approval, or blocked`);
+  }
+
+  if (rule.blockedFields !== undefined) {
+    if (!Array.isArray(rule.blockedFields)) {
+      throw new TypeError(`Policy rule ${index} blockedFields must be an array`);
+    }
+    const seen = new Set();
+    for (const field of rule.blockedFields) {
+      if (typeof field !== 'string' || field.length === 0 || field.trim() !== field || field.includes('*')) {
+        throw new TypeError(`Policy rule ${index} blockedFields must contain non-empty exact field names`);
+      }
+      if (seen.has(field)) {
+        throw new TypeError(`Policy rule ${index} has duplicate blockedFields entry: ${field}`);
+      }
+      seen.add(field);
+    }
+  }
+
+  if (rule.outcome === 'needs_approval' && !isNonEmptyName(rule.approval)) {
+    throw new TypeError(`Policy rule ${index} with needs_approval must have a non-empty approval name`);
+  }
+  if (rule.approval !== undefined && typeof rule.approval !== 'string') {
+    throw new TypeError(`Policy rule ${index} approval must be a string`);
+  }
+  if (rule.reason !== undefined && typeof rule.reason !== 'string') {
+    throw new TypeError(`Policy rule ${index} reason must be a string`);
+  }
+}
+
+function validateSelector(value, field, index) {
+  if (typeof value !== 'string' || value.length === 0 || value.trim() !== value) {
+    throw new TypeError(`Policy rule ${index} ${field} must be a non-empty string`);
+  }
+  if (value !== '*' && value.includes('*')) {
+    throw new TypeError(`Policy rule ${index} ${field} wildcard must be the entire value`);
+  }
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isNonEmptyName(value) {
+  return typeof value === 'string' && value.trim().length > 0 && value.trim() === value;
+}
+
 function validateActionShape(action, index) {
   if (!action || typeof action !== 'object') {
     return malformed(index, 'Action must be an object');
@@ -63,12 +137,36 @@ function validateActionShape(action, index) {
   return null;
 }
 
-function findRule(action, policy) {
-  const rules = Array.isArray(policy?.rules) ? policy.rules : [];
-  return rules.find((rule) => {
+function resolveRule(action, rules) {
+  const matches = rules.map((rule, index) => ({ rule, index }))
+    .filter(({ rule }) => {
     const typeMatches = rule.type === action.type || rule.type === '*';
     const targetMatches = rule.target === action.target || rule.target === '*';
     return typeMatches && targetMatches;
+  });
+
+  if (matches.length === 0) {
+    return null;
+  }
+
+  const highestSpecificity = Math.max(...matches.map(({ rule }) => specificity(rule)));
+  const finalists = matches.filter(({ rule }) => specificity(rule) === highestSpecificity);
+  const signatures = new Set(finalists.map(({ rule }) => enforcementSignature(rule)));
+  if (signatures.size > 1) {
+    return { conflict: true, indexes: finalists.map(({ index }) => index) };
+  }
+  return { conflict: false, rule: finalists[0].rule };
+}
+
+function specificity(rule) {
+  return Number(rule.type !== '*') + Number(rule.target !== '*');
+}
+
+function enforcementSignature(rule) {
+  return JSON.stringify({
+    outcome: rule.outcome,
+    approval: rule.approval ?? null,
+    blockedFields: [...(rule.blockedFields ?? [])].sort()
   });
 }
 

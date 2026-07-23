@@ -8,7 +8,7 @@ const policy = {
   rules: [
     { type: 'crm.note.create', target: 'hubspot', outcome: 'allowed' },
     { type: 'crm.deal.update', target: 'hubspot', outcome: 'needs_approval', approval: 'sales-review' },
-    { type: 'message.send', target: '*', outcome: 'needs_approval', blockedFields: ['bcc'] }
+    { type: 'message.send', target: '*', outcome: 'needs_approval', approval: 'send-review', blockedFields: ['bcc'] }
   ]
 };
 
