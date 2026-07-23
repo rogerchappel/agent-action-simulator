@@ -1,9 +1,9 @@
 const OUTCOMES = new Set(['allowed', 'needs_approval', 'blocked']);
 
 export function simulatePlan(plan, policy) {
+  validatePlan(plan);
   validatePolicy(policy);
-  const actions = Array.isArray(plan?.actions) ? plan.actions : [];
-  const results = actions.map((action, index) => classifyValidatedAction(action, policy.rules, index));
+  const results = plan.actions.map((action, index) => classifyValidatedAction(action, policy.rules, index));
   return {
     summary: summarize(results),
     results
@@ -24,6 +24,15 @@ export function validatePolicy(policy) {
   }
 
   policy.rules.forEach(validateRule);
+}
+
+export function validatePlan(plan) {
+  if (!isPlainObject(plan)) {
+    throw new TypeError('Plan must be an object');
+  }
+  if (!Array.isArray(plan.actions)) {
+    throw new TypeError('Plan actions must be an array');
+  }
 }
 
 function classifyValidatedAction(action, rules, index) {
@@ -115,7 +124,11 @@ function validateSelector(value, field, index) {
 }
 
 function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 function isNonEmptyName(value) {
