@@ -11,7 +11,8 @@ Use this skill when an agent has a proposed connector/tool action plan and needs
 
 ## Required inputs
 
-- Action-plan JSON with an `actions` array.
+- Action-plan JSON object with an `actions` array. The array may be explicitly
+  empty; missing or non-array `actions` values are rejected.
 - Approval-policy JSON with explicit, valid rules. Wildcards must occupy the
   entire type or target value, and `needs_approval` rules must name an approval.
 

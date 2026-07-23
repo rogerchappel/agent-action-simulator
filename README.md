@@ -28,6 +28,22 @@ npx agent-action-simulator --version
 - `blocked`: action type, target, or field is disallowed or unknown
 - `malformed`: action lacks required shape
 
+## Action plans
+
+An action plan must be a JSON object with an `actions` array. `null`, a
+top-level array, an object without `actions`, and a non-array `actions` value
+are rejected instead of being treated as successful zero-action reviews.
+An explicitly empty plan is valid:
+
+```json
+{
+  "actions": []
+}
+```
+
+Each action is classified as `malformed` when it is not an object with string
+`id`, `type`, and `target` values. When present, `fields` must be an object.
+
 ## Policy rules
 
 Each rule requires a non-empty `type`, `target`, and supported `outcome`.

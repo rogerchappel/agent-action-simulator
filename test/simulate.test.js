@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { simulatePlan } from '../src/simulate.js';
 import { formatMarkdownReport } from '../src/report.js';
 
@@ -33,6 +36,27 @@ test('classifies all supported outcomes', () => {
   assert.deepEqual(result.results[2].fields, ['bcc']);
   assert.equal(result.results[3].reason, 'No matching policy rule');
   assert.match(result.results[4].reason, /missing string type/u);
+});
+
+test('accepts an explicitly empty action plan', () => {
+  assert.deepEqual(simulatePlan({ actions: [] }, policy), {
+    summary: { allowed: 0, needs_approval: 0, blocked: 0, malformed: 0 },
+    results: []
+  });
+});
+
+test('rejects malformed top-level plans', () => {
+  const malformedPlans = [
+    [null, /plan must be an object/iu],
+    [[], /plan must be an object/iu],
+    [{}, /plan actions must be an array/iu],
+    [{ actions: null }, /plan actions must be an array/iu],
+    [{ actions: {} }, /plan actions must be an array/iu]
+  ];
+
+  for (const [candidate, expected] of malformedPlans) {
+    assert.throws(() => simulatePlan(candidate, policy), expected);
+  }
 });
 
 test('prefers exact rules over broad wildcards regardless of rule order', () => {
@@ -138,4 +162,34 @@ test('cli exposes help and version metadata', () => {
   const version = spawnSync(process.execPath, ['src/cli.js', '--version'], { encoding: 'utf8' });
   assert.equal(version.status, 0);
   assert.match(version.stdout, /^0\.1\.0\n$/u);
+});
+
+test('cli rejects malformed top-level plans with an actionable error', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'agent-action-simulator-'));
+
+  try {
+    const policyPath = join(directory, 'policy.json');
+    writeFileSync(policyPath, JSON.stringify(policy));
+
+    for (const [name, candidate, expected] of [
+      ['null.json', null, /plan must be an object/iu],
+      ['array.json', [], /plan must be an object/iu],
+      ['missing-actions.json', {}, /plan actions must be an array/iu],
+      ['non-array-actions.json', { actions: {} }, /plan actions must be an array/iu]
+    ]) {
+      const planPath = join(directory, name);
+      writeFileSync(planPath, JSON.stringify(candidate));
+      const result = spawnSync(
+        process.execPath,
+        ['src/cli.js', planPath, '--policy', policyPath, '--format', 'json'],
+        { encoding: 'utf8' }
+      );
+
+      assert.equal(result.status, 1, name);
+      assert.equal(result.stdout, '', name);
+      assert.match(result.stderr, expected, name);
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

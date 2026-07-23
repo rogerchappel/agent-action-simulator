@@ -1,2 +1,2 @@
-export { classifyAction, simulatePlan, validatePolicy } from './simulate.js';
+export { classifyAction, simulatePlan, validatePlan, validatePolicy } from './simulate.js';
 export { formatJsonReport, formatMarkdownReport } from './report.js';
