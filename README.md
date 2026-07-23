@@ -28,6 +28,36 @@ npx agent-action-simulator --version
 - `blocked`: action type, target, or field is disallowed or unknown
 - `malformed`: action lacks required shape
 
+## Policy rules
+
+Each rule requires a non-empty `type`, `target`, and supported `outcome`.
+Use `"*"` as the entire type or target to match any value; embedded wildcards
+such as `"message.*"` are rejected. `blockedFields`, when present, must be an
+array of unique, non-empty exact field names. A `needs_approval` rule must also
+name a non-empty `approval`.
+
+```json
+{
+  "rules": [
+    { "type": "*", "target": "*", "outcome": "blocked" },
+    {
+      "type": "message.send",
+      "target": "*",
+      "outcome": "needs_approval",
+      "approval": "human-send-review"
+    },
+    { "type": "message.send", "target": "gmail", "outcome": "allowed" }
+  ]
+}
+```
+
+Matching is independent of rule order. The simulator chooses the matching rule
+with the most exact selectors: exact type and target, then one exact selector,
+then the double wildcard. If equally specific matching rules disagree on
+`outcome`, `approval`, or `blockedFields`, the action is blocked as a policy
+conflict. Equivalent rules may use different explanatory `reason` text; the
+first equivalent rule supplies the report reason.
+
 ## Safety
 
 The package never loads credentials and never calls a connector. It only reads local JSON files and writes the report to stdout.
@@ -35,7 +65,7 @@ The package never loads credentials and never calls a connector. It only reads l
 ## Limitations
 
 - Policies are intentionally small JSON documents.
-- Matching is exact by action type, target, and field names.
+- Types and targets support whole-value wildcards; field names match exactly.
 - The simulator is a preflight aid, not a substitute for connector-side authorization.
 
 ## Verify
