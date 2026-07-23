@@ -12,7 +12,8 @@ Use this skill when an agent has a proposed connector/tool action plan and needs
 ## Required inputs
 
 - Action-plan JSON with an `actions` array.
-- Approval-policy JSON with explicit rules.
+- Approval-policy JSON with explicit, valid rules. Wildcards must occupy the
+  entire type or target value, and `needs_approval` rules must name an approval.
 
 ## Side-effect boundaries
 
@@ -20,6 +21,8 @@ Use this skill when an agent has a proposed connector/tool action plan and needs
 - Writes no files by default.
 - Does not call connectors, APIs, browsers, message tools, or credential stores.
 - Unknown action types are blocked by default.
+- More-specific policy rules override broader wildcards regardless of order;
+  conflicting equally specific matches are blocked.
 
 ## Approval requirements
 
