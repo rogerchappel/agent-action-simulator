@@ -21,6 +21,10 @@ npx agent-action-simulator --help
 npx agent-action-simulator --version
 ```
 
+`--policy` is required for simulations and may be specified once. The optional
+`--format` flag may also be specified once and accepts `json` or `markdown`.
+Repeated options are rejected before any input files are read.
+
 ## Outcomes
 
 - `allowed`: policy permits the action without extra approval
