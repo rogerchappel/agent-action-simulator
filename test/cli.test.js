@@ -47,6 +47,31 @@ test('rejects options with missing values', async () => {
   assert.match(result.stderr, /--policy requires a value/u);
 });
 
+test('rejects repeated policy options before reading inputs', async () => {
+  const result = await run([
+    'missing-actions.json',
+    '--policy', 'first-policy.json',
+    '--policy', 'second-policy.json'
+  ]);
+
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /--policy may only be specified once/u);
+});
+
+test('rejects repeated format options before reading inputs', async () => {
+  const result = await run([
+    'missing-actions.json',
+    '--policy', 'missing-policy.json',
+    '--format', 'json',
+    '--format', 'markdown'
+  ]);
+
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /--format may only be specified once/u);
+});
+
 test('applies an exact blocking rule before an earlier wildcard rule', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'agent-action-simulator-'));
   context.after(() => rm(directory, { recursive: true, force: true }));

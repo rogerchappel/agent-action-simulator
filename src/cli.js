@@ -45,6 +45,9 @@ function parseFlags(args) {
     if (!['policy', 'format'].includes(key)) {
       throw new Error(`unknown option: ${arg}`);
     }
+    if (Object.hasOwn(flags, key)) {
+      throw new Error(`${arg} may only be specified once`);
+    }
     const next = args[index + 1];
     if (!next || next.startsWith('--')) {
       throw new Error(`${arg} requires a value`);
