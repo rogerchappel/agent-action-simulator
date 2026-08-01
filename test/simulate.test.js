@@ -45,6 +45,23 @@ test('accepts an explicitly empty action plan', () => {
   });
 });
 
+test('requires non-empty exact action identity strings', () => {
+  const validAction = { id: 'send-1', type: 'message.send', target: 'gmail', fields: {} };
+
+  for (const field of ['id', 'type', 'target']) {
+    for (const value of ['', '   ', ` ${validAction[field]}`, `${validAction[field]} `]) {
+      const action = { ...validAction, [field]: value };
+      const result = simulatePlan({ actions: [action] }, policy);
+
+      assert.equal(result.summary.malformed, 1, `${field}=${JSON.stringify(value)}`);
+      assert.equal(result.results[0].outcome, 'malformed');
+      assert.equal(result.results[0].reason, `Action ${field} must be a non-empty exact string`);
+    }
+  }
+
+  assert.equal(simulatePlan({ actions: [validAction] }, policy).results[0].outcome, 'needs_approval');
+});
+
 test('rejects malformed top-level plans', () => {
   const malformedPlans = [
     [null, /plan must be an object/iu],
@@ -189,6 +206,53 @@ test('cli rejects malformed top-level plans with an actionable error', () => {
       assert.equal(result.stdout, '', name);
       assert.match(result.stderr, expected, name);
     }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('cli reports invalid action identity strings as malformed', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'agent-action-simulator-'));
+  const validAction = { id: 'send-1', type: 'message.send', target: 'gmail', fields: {} };
+
+  try {
+    const policyPath = join(directory, 'policy.json');
+    writeFileSync(policyPath, JSON.stringify(policy));
+
+    for (const [field, value] of [
+      ['id', ''],
+      ['id', '   '],
+      ['id', ' send-1'],
+      ['type', ''],
+      ['type', '   '],
+      ['type', 'message.send '],
+      ['target', ''],
+      ['target', '   '],
+      ['target', ' gmail']
+    ]) {
+      const planPath = join(directory, `${field}-${JSON.stringify(value)}.json`);
+      writeFileSync(planPath, JSON.stringify({ actions: [{ ...validAction, [field]: value }] }));
+      const result = spawnSync(
+        process.execPath,
+        ['src/cli.js', planPath, '--policy', policyPath, '--format', 'json'],
+        { encoding: 'utf8' }
+      );
+
+      assert.equal(result.status, 0, `${field}=${JSON.stringify(value)}`);
+      const report = JSON.parse(result.stdout);
+      assert.equal(report.summary.malformed, 1);
+      assert.equal(report.results[0].reason, `Action ${field} must be a non-empty exact string`);
+    }
+
+    const validPath = join(directory, 'valid.json');
+    writeFileSync(validPath, JSON.stringify({ actions: [validAction] }));
+    const valid = spawnSync(
+      process.execPath,
+      ['src/cli.js', validPath, '--policy', policyPath, '--format', 'json'],
+      { encoding: 'utf8' }
+    );
+    assert.equal(valid.status, 0);
+    assert.equal(JSON.parse(valid.stdout).results[0].outcome, 'needs_approval');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
