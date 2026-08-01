@@ -140,8 +140,8 @@ function validateActionShape(action, index) {
     return malformed(index, 'Action must be an object');
   }
   for (const key of ['id', 'type', 'target']) {
-    if (!action[key] || typeof action[key] !== 'string') {
-      return malformed(index, `Action missing string ${key}`);
+    if (typeof action[key] !== 'string' || action[key].length === 0 || action[key].trim() !== action[key]) {
+      return malformed(index, `Action ${key} must be a non-empty exact string`);
     }
   }
   if (action.fields !== undefined && (!action.fields || typeof action.fields !== 'object' || Array.isArray(action.fields))) {

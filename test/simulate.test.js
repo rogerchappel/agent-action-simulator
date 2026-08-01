@@ -35,7 +35,7 @@ test('classifies all supported outcomes', () => {
   assert.equal(result.results[1].approval, 'sales-review');
   assert.deepEqual(result.results[2].fields, ['bcc']);
   assert.equal(result.results[3].reason, 'No matching policy rule');
-  assert.match(result.results[4].reason, /missing string type/u);
+  assert.equal(result.results[4].reason, 'Action type must be a non-empty exact string');
 });
 
 test('accepts an explicitly empty action plan', () => {
