@@ -45,8 +45,10 @@ An explicitly empty plan is valid:
 }
 ```
 
-Each action is classified as `malformed` when it is not an object with string
-`id`, `type`, and `target` values. When present, `fields` must be an object.
+Each action is classified as `malformed` when it is not an object with
+non-empty exact-string `id`, `type`, and `target` values. These values are not
+trimmed: leading or trailing whitespace makes the action malformed. When
+present, `fields` must be an object.
 
 ## Policy rules
 
