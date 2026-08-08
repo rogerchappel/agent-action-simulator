@@ -23,7 +23,9 @@ npx agent-action-simulator --version
 
 `--policy` is required for simulations and may be specified once. The optional
 `--format` flag may also be specified once and accepts `json` or `markdown`.
-Repeated options are rejected before any input files are read.
+Repeated options and unsupported formats are rejected before any input files
+are read. `--help` and `--version` are standalone commands; combining either
+with a plan path or any other option is an error.
 
 ## Outcomes
 
