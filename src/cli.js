@@ -7,31 +7,40 @@ const usage = 'usage: agent-action-simulator <actions.json> --policy <policy.jso
 
 async function main(argv) {
   const [planPath, ...rest] = argv;
-  const flags = parseFlags(rest);
 
-  if (planPath === '--help' || flags.help) {
+  if (planPath === '--help') {
+    requireStandaloneCommand(planPath, rest);
     process.stdout.write(`${usage}\n`);
     return;
   }
 
-  if (planPath === '--version' || flags.version) {
+  if (planPath === '--version') {
+    requireStandaloneCommand(planPath, rest);
     const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
     process.stdout.write(`${packageJson.version}\n`);
     return;
   }
 
+  const flags = parseFlags(rest);
   if (!planPath || !flags.policy) {
     throw new Error(usage);
+  }
+
+  const format = flags.format ?? 'markdown';
+  if (!['json', 'markdown'].includes(format)) {
+    throw new Error('--format must be json or markdown');
   }
 
   const plan = JSON.parse(await readFile(planPath, 'utf8'));
   const policy = JSON.parse(await readFile(flags.policy, 'utf8'));
   const simulation = simulatePlan(plan, policy);
-  const format = flags.format ?? 'markdown';
-  if (!['json', 'markdown'].includes(format)) {
-    throw new Error('--format must be json or markdown');
-  }
   process.stdout.write(format === 'json' ? formatJsonReport(simulation) : formatMarkdownReport(simulation));
+}
+
+function requireStandaloneCommand(command, additionalArgs) {
+  if (additionalArgs.length > 0) {
+    throw new Error(`${command} must be used alone`);
+  }
 }
 
 function parseFlags(args) {
