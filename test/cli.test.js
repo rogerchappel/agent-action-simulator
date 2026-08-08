@@ -72,6 +72,42 @@ test('rejects repeated format options before reading inputs', async () => {
   assert.match(result.stderr, /--format may only be specified once/u);
 });
 
+test('requires help to be used as a standalone command', async () => {
+  const result = await run(['--help', '--format', 'json']);
+
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /--help must be used alone/u);
+});
+
+test('requires version to be used as a standalone command', async () => {
+  const result = await run(['--version', '--policy', 'missing-policy.json']);
+
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /--version must be used alone/u);
+});
+
+test('rejects mixed help and version commands', async () => {
+  const result = await run(['--help', '--version']);
+
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /--help must be used alone/u);
+});
+
+test('validates output format before reading inputs', async () => {
+  const result = await run([
+    'missing-actions.json',
+    '--policy', 'missing-policy.json',
+    '--format', 'yaml'
+  ]);
+
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /--format must be json or markdown/u);
+});
+
 test('applies an exact blocking rule before an earlier wildcard rule', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'agent-action-simulator-'));
   context.after(() => rm(directory, { recursive: true, force: true }));
