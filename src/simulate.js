@@ -106,8 +106,8 @@ function validateRule(rule, index) {
   if (rule.outcome === 'needs_approval' && !isNonEmptyName(rule.approval)) {
     throw new TypeError(`Policy rule ${index} with needs_approval must have a non-empty approval name`);
   }
-  if (rule.approval !== undefined && typeof rule.approval !== 'string') {
-    throw new TypeError(`Policy rule ${index} approval must be a string`);
+  if (rule.outcome !== 'needs_approval' && rule.approval !== undefined) {
+    throw new TypeError(`Policy rule ${index} with ${rule.outcome} must not have an approval name`);
   }
   if (rule.reason !== undefined && typeof rule.reason !== 'string') {
     throw new TypeError(`Policy rule ${index} reason must be a string`);
