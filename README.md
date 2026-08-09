@@ -57,8 +57,9 @@ present, `fields` must be an object.
 Each rule requires a non-empty `type`, `target`, and supported `outcome`.
 Use `"*"` as the entire type or target to match any value; embedded wildcards
 such as `"message.*"` are rejected. `blockedFields`, when present, must be an
-array of unique, non-empty exact field names. A `needs_approval` rule must also
-name a non-empty `approval`.
+array of unique, non-empty exact field names. The `approval` property is valid
+only on `needs_approval` rules, where it is required and must be a non-empty
+exact name. `allowed` and `blocked` rules must omit `approval`.
 
 ```json
 {

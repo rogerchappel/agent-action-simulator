@@ -5,7 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { simulatePlan } from '../src/simulate.js';
-import { formatMarkdownReport } from '../src/report.js';
+import { formatJsonReport, formatMarkdownReport } from '../src/report.js';
 
 const policy = {
   rules: [
@@ -36,6 +36,28 @@ test('classifies all supported outcomes', () => {
   assert.deepEqual(result.results[2].fields, ['bcc']);
   assert.equal(result.results[3].reason, 'No matching policy rule');
   assert.equal(result.results[4].reason, 'Action type must be a non-empty exact string');
+});
+
+test('exposes approval only for needs_approval results', () => {
+  const result = simulatePlan({
+    actions: [
+      { id: 'allowed', type: 'read', target: 'crm', fields: {} },
+      { id: 'review', type: 'write', target: 'crm', fields: {} },
+      { id: 'blocked', type: 'delete', target: 'crm', fields: {} }
+    ]
+  }, {
+    rules: [
+      { type: 'read', target: 'crm', outcome: 'allowed' },
+      { type: 'write', target: 'crm', outcome: 'needs_approval', approval: 'owner-review' },
+      { type: 'delete', target: 'crm', outcome: 'blocked' }
+    ]
+  });
+
+  assert.deepEqual(result.results.map(({ outcome, approval }) => ({ outcome, approval })), [
+    { outcome: 'allowed', approval: null },
+    { outcome: 'needs_approval', approval: 'owner-review' },
+    { outcome: 'blocked', approval: null }
+  ]);
 });
 
 test('accepts an explicitly empty action plan', () => {
@@ -152,7 +174,9 @@ test('rejects malformed policies before classifying actions', () => {
     [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'blocked', blockedFields: ['bcc', 'bcc'] }] }, /duplicate blockedFields/iu],
     [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'blocked', blockedFields: ['*'] }] }, /blockedFields/iu],
     [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'needs_approval' }] }, /non-empty approval/iu],
-    [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'needs_approval', approval: '  ' }] }, /non-empty approval/iu]
+    [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'needs_approval', approval: '  ' }] }, /non-empty approval/iu],
+    [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'allowed', approval: 'owner-review' }] }, /allowed must not have an approval name/iu],
+    [{ rules: [{ type: 'message.send', target: 'gmail', outcome: 'blocked', approval: 'owner-review' }] }, /blocked must not have an approval name/iu]
   ];
 
   for (const [candidate, expected] of malformedPolicies) {
@@ -169,6 +193,36 @@ test('renders markdown reviewer report', () => {
 
   assert.match(formatMarkdownReport(result), /# Agent Action Simulation/u);
   assert.match(formatMarkdownReport(result), /a1: allowed/u);
+});
+
+test('reports approval semantics consistently in markdown and JSON', () => {
+  const result = simulatePlan({
+    actions: [
+      { id: 'allowed', type: 'read', target: 'crm', fields: {} },
+      { id: 'review', type: 'write', target: 'crm', fields: {} },
+      { id: 'blocked', type: 'delete', target: 'crm', fields: {} }
+    ]
+  }, {
+    rules: [
+      { type: 'read', target: 'crm', outcome: 'allowed' },
+      { type: 'write', target: 'crm', outcome: 'needs_approval', approval: 'owner-review' },
+      { type: 'delete', target: 'crm', outcome: 'blocked' }
+    ]
+  });
+
+  const markdown = formatMarkdownReport(result);
+  assert.match(markdown, /allowed: allowed - Allowed by policy\./u);
+  assert.match(markdown, /review: needs_approval - Approval required by policy\. Approval: owner-review\./u);
+  assert.match(markdown, /blocked: blocked - Blocked by policy\./u);
+  assert.doesNotMatch(markdown, /allowed:.*Approval:/u);
+  assert.doesNotMatch(markdown, /blocked:.*Approval:/u);
+
+  const report = JSON.parse(formatJsonReport(result));
+  assert.deepEqual(report.results.map(({ outcome, approval }) => ({ outcome, approval })), [
+    { outcome: 'allowed', approval: null },
+    { outcome: 'needs_approval', approval: 'owner-review' },
+    { outcome: 'blocked', approval: null }
+  ]);
 });
 
 test('cli exposes help and version metadata', () => {
