@@ -146,3 +146,25 @@ test('rejects malformed policy files', async (context) => {
   assert.equal(result.code, 1);
   assert.match(result.stderr, /wildcard must be the entire value/iu);
 });
+
+test('diagnoses approval names on outcomes that cannot require approval', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'agent-action-simulator-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+
+  for (const outcome of ['allowed', 'blocked']) {
+    const policyPath = join(directory, `${outcome}.json`);
+    await writeFile(policyPath, JSON.stringify({
+      rules: [{ type: '*', target: '*', outcome, approval: 'owner-review' }]
+    }));
+
+    const result = await run([
+      fixture('actions.json'),
+      '--policy', policyPath,
+      '--format', 'json'
+    ]);
+
+    assert.equal(result.code, 1, outcome);
+    assert.equal(result.stdout, '', outcome);
+    assert.match(result.stderr, new RegExp(`${outcome} must not have an approval name`, 'u'), outcome);
+  }
+});
