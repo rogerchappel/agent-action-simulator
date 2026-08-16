@@ -55,6 +55,9 @@ present, `fields` must be an object.
 ## Policy rules
 
 Each rule requires a non-empty `type`, `target`, and supported `outcome`.
+Rules accept only the properties `type`, `target`, `outcome`, `blockedFields`,
+`approval`, and `reason`; unknown properties are rejected with the rule index
+and property name so misspelled enforcement controls cannot be ignored.
 Use `"*"` as the entire type or target to match any value; embedded wildcards
 such as `"message.*"` are rejected. `blockedFields`, when present, must be an
 array of unique, non-empty exact field names. The `approval` property is valid

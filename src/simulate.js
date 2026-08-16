@@ -1,4 +1,5 @@
 const OUTCOMES = new Set(['allowed', 'needs_approval', 'blocked']);
+const RULE_PROPERTIES = new Set(['type', 'target', 'outcome', 'blockedFields', 'approval', 'reason']);
 
 export function simulatePlan(plan, policy) {
   validatePlan(plan);
@@ -78,6 +79,12 @@ function classifyValidatedAction(action, rules, index) {
 function validateRule(rule, index) {
   if (!isPlainObject(rule)) {
     throw new TypeError(`Policy rule ${index} must be an object`);
+  }
+
+  for (const property of Object.keys(rule)) {
+    if (!RULE_PROPERTIES.has(property)) {
+      throw new TypeError(`Policy rule ${index} has unknown property: ${property}`);
+    }
   }
 
   validateSelector(rule.type, 'type', index);

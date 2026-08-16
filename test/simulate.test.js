@@ -184,6 +184,40 @@ test('rejects malformed policies before classifying actions', () => {
   }
 });
 
+test('rejects unknown policy rule properties for every outcome', () => {
+  const plan = { actions: [{ id: 'a1', type: 'message.send', target: 'gmail', fields: {} }] };
+  const rules = [
+    { type: 'message.send', target: 'gmail', outcome: 'allowed', audit: true },
+    { type: 'message.send', target: 'gmail', outcome: 'needs_approval', approval: 'owner-review', approver: 'owner' },
+    { type: 'message.send', target: 'gmail', outcome: 'blocked', denyReason: 'restricted' }
+  ];
+
+  rules.forEach((rule, index) => {
+    const unknownProperty = ['audit', 'approver', 'denyReason'][index];
+    assert.throws(
+      () => simulatePlan(plan, { rules: [
+        { type: '*', target: '*', outcome: 'blocked' },
+        rule
+      ] }),
+      new RegExp(`policy rule 1 has unknown property: ${unknownProperty}`, 'iu')
+    );
+  });
+});
+
+test('rejects a misspelled blockedFields control instead of allowing the action', () => {
+  const plan = {
+    actions: [{ id: 'send-1', type: 'message.send', target: 'gmail', fields: { bcc: 'hidden@example.com' } }]
+  };
+  const policyWithTypo = {
+    rules: [{ type: 'message.send', target: 'gmail', outcome: 'allowed', blockedField: ['bcc'] }]
+  };
+
+  assert.throws(
+    () => simulatePlan(plan, policyWithTypo),
+    /policy rule 0 has unknown property: blockedField/iu
+  );
+});
+
 test('renders markdown reviewer report', () => {
   const result = simulatePlan({
     actions: [
