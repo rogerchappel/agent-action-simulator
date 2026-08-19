@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+const readme = readFileSync('README.md', 'utf8');
+const ciWorkflow = readFileSync('.github/workflows/ci.yml', 'utf8');
 const failures = [];
 
 function requireField(condition, message) {
@@ -16,6 +18,11 @@ requireField(pkg.bugs?.url === 'https://github.com/rogerchappel/agent-action-sim
 requireField(pkg.homepage === 'https://github.com/rogerchappel/agent-action-simulator#readme', 'homepage must point at the README');
 requireField(pkg.bin?.['agent-action-simulator'] === './src/cli.js', 'CLI bin must point at ./src/cli.js');
 requireField(Array.isArray(pkg.files), 'package files allowlist is required');
+requireField(/node-version:\s*\[20, 26\]/.test(ciWorkflow), 'CI must test the minimum and current maintained Node releases');
+requireField(/node-version:\s*\$\{\{ matrix\.node-version \}\}/.test(ciWorkflow), 'CI setup-node must use the runtime matrix');
+requireField(/run:\s*npm run release:check/.test(ciWorkflow), 'CI matrix jobs must run the complete release check');
+requireField(readme.includes('not published to the npm registry yet'), 'README must distinguish source usage from future registry installation');
+requireField(readme.includes('Node 20 and Node 26 CI matrix'), 'README must document the verified runtime matrix');
 
 for (const file of [
   'README.md',
