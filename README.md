@@ -14,6 +14,10 @@ npm run release:check
 
 ## Install
 
+The package is not published to the npm registry yet. Until the first release,
+clone this repository and use the source-checkout commands in Quickstart above.
+After publication, the registry install will be:
+
 ```sh
 npm install agent-action-simulator
 npx agent-action-simulator fixtures/actions.json --policy fixtures/policy.json
@@ -103,6 +107,9 @@ npm run release:check
 ```
 
 `npm run release:readiness` checks package metadata, the CLI bin target,
-support docs, release fixtures, CI presence, and the npm files allowlist.
+support docs, release fixtures, the Node 20 and Node 26 CI matrix, and the npm
+files allowlist. Node 20 is the declared minimum runtime; Node 26 provides
+coverage on the current maintained release. Both CI jobs run the complete
+`npm run release:check` command.
 `npm run package:smoke` dry-runs the npm tarball and fails if release-critical
 files would be omitted.
