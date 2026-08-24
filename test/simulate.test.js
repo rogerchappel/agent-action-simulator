@@ -15,6 +15,25 @@ const policy = {
   ]
 };
 
+test('rejects duplicate action identities before classification', () => {
+  assert.throws(() => simulatePlan({
+    actions: [
+      { id: 'same', type: 'crm.note.create', target: 'hubspot' },
+      { id: 'same', type: 'message.send', target: 'gmail' }
+    ]
+  }, policy), /duplicate action id: same/u);
+});
+
+test('rejects unknown plan and action control properties', () => {
+  assert.throws(
+    () => simulatePlan({ actons: [], actions: [] }, policy),
+    /Plan has unknown property: actons/u
+  );
+  assert.throws(() => simulatePlan({
+    actions: [{ id: 'a1', type: 'crm.note.create', target: 'hubspot', feilds: {} }]
+  }, policy), /Plan action 0 has unknown property: feilds/u);
+});
+
 test('classifies all supported outcomes', () => {
   const result = simulatePlan({
     actions: [

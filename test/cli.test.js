@@ -147,6 +147,30 @@ test('rejects malformed policy files', async (context) => {
   assert.match(result.stderr, /wildcard must be the entire value/iu);
 });
 
+test('rejects ambiguous action plans before emitting a report', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'agent-action-simulator-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+
+  for (const [name, plan, diagnostic] of [
+    ['duplicate', { actions: [
+      { id: 'same', type: 'message.send', target: 'gmail' },
+      { id: 'same', type: 'message.send', target: 'slack' }
+    ] }, /duplicate action id: same/u],
+    ['unknown-plan', { actons: [], actions: [] }, /Plan has unknown property: actons/u],
+    ['unknown-action', { actions: [
+      { id: 'send-1', type: 'message.send', target: 'gmail', feilds: {} }
+    ] }, /Plan action 0 has unknown property: feilds/u]
+  ]) {
+    const planPath = join(directory, `${name}.json`);
+    await writeFile(planPath, JSON.stringify(plan));
+    const result = await run([planPath, '--policy', fixture('policy.json'), '--format', 'json']);
+
+    assert.equal(result.code, 1, name);
+    assert.equal(result.stdout, '', name);
+    assert.match(result.stderr, diagnostic, name);
+  }
+});
+
 test('diagnoses approval names on outcomes that cannot require approval', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'agent-action-simulator-'));
   context.after(() => rm(directory, { recursive: true, force: true }));
