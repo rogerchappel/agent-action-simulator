@@ -1,5 +1,7 @@
 const OUTCOMES = new Set(['allowed', 'needs_approval', 'blocked']);
 const RULE_PROPERTIES = new Set(['type', 'target', 'outcome', 'blockedFields', 'approval', 'reason']);
+const PLAN_PROPERTIES = new Set(['actions']);
+const ACTION_PROPERTIES = new Set(['id', 'type', 'target', 'fields']);
 
 export function simulatePlan(plan, policy) {
   validatePlan(plan);
@@ -33,6 +35,30 @@ export function validatePlan(plan) {
   }
   if (!Array.isArray(plan.actions)) {
     throw new TypeError('Plan actions must be an array');
+  }
+
+  rejectUnknownProperties(plan, PLAN_PROPERTIES, 'Plan');
+
+  const actionIds = new Set();
+  plan.actions.forEach((action, index) => {
+    if (!isPlainObject(action)) {
+      return;
+    }
+    rejectUnknownProperties(action, ACTION_PROPERTIES, `Plan action ${index}`);
+    if (typeof action.id === 'string' && actionIds.has(action.id)) {
+      throw new TypeError(`Plan has duplicate action id: ${action.id}`);
+    }
+    if (typeof action.id === 'string') {
+      actionIds.add(action.id);
+    }
+  });
+}
+
+function rejectUnknownProperties(value, allowed, label) {
+  for (const property of Object.keys(value)) {
+    if (!allowed.has(property)) {
+      throw new TypeError(`${label} has unknown property: ${property}`);
+    }
   }
 }
 
