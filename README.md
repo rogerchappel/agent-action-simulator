@@ -40,9 +40,12 @@ with a plan path or any other option is an error.
 
 ## Action plans
 
-An action plan must be a JSON object with an `actions` array. `null`, a
+An action plan must be a JSON object containing only an `actions` array. `null`, a
 top-level array, an object without `actions`, and a non-array `actions` value
 are rejected instead of being treated as successful zero-action reviews.
+Unknown top-level properties are rejected, so misspelled controls cannot turn
+into an incomplete successful review. Action `id` values must be unique within
+the plan so every reported decision has an unambiguous identity.
 An explicitly empty plan is valid:
 
 ```json
@@ -54,7 +57,9 @@ An explicitly empty plan is valid:
 Each action is classified as `malformed` when it is not an object with
 non-empty exact-string `id`, `type`, and `target` values. These values are not
 trimmed: leading or trailing whitespace makes the action malformed. When
-present, `fields` must be an object.
+present, `fields` must be an object. Actions accept only `id`, `type`, `target`,
+and `fields`; unknown properties are rejected with the action index and property
+name before a report is emitted.
 
 ## Policy rules
 
