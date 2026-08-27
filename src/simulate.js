@@ -1,5 +1,6 @@
 const OUTCOMES = new Set(['allowed', 'needs_approval', 'blocked']);
 const RULE_PROPERTIES = new Set(['type', 'target', 'outcome', 'blockedFields', 'approval', 'reason']);
+const POLICY_PROPERTIES = new Set(['rules']);
 const PLAN_PROPERTIES = new Set(['actions']);
 const ACTION_PROPERTIES = new Set(['id', 'type', 'target', 'fields']);
 
@@ -15,6 +16,9 @@ export function simulatePlan(plan, policy) {
 
 export function classifyAction(action, policy, index = 0) {
   validatePolicy(policy);
+  if (isPlainObject(action)) {
+    rejectUnknownProperties(action, ACTION_PROPERTIES, 'Action');
+  }
   return classifyValidatedAction(action, policy.rules, index);
 }
 
@@ -26,6 +30,7 @@ export function validatePolicy(policy) {
     throw new TypeError('Policy rules must be an array');
   }
 
+  rejectUnknownProperties(policy, POLICY_PROPERTIES, 'Policy');
   policy.rules.forEach(validateRule);
 }
 

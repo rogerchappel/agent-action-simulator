@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { simulatePlan } from '../src/simulate.js';
+import { classifyAction, simulatePlan } from '../src/simulate.js';
 import { formatJsonReport, formatMarkdownReport } from '../src/report.js';
 
 const policy = {
@@ -32,6 +32,35 @@ test('rejects unknown plan and action control properties', () => {
   assert.throws(() => simulatePlan({
     actions: [{ id: 'a1', type: 'crm.note.create', target: 'hubspot', feilds: {} }]
   }, policy), /Plan action 0 has unknown property: feilds/u);
+});
+
+test('rejects unknown top-level policy controls through both exported APIs', () => {
+  const policyWithTypo = { ...policy, rulez: [] };
+  const action = { id: 'a1', type: 'crm.note.create', target: 'hubspot', fields: {} };
+
+  assert.throws(
+    () => simulatePlan({ actions: [action] }, policyWithTypo),
+    /Policy has unknown property: rulez/u
+  );
+  assert.throws(
+    () => classifyAction(action, policyWithTypo),
+    /Policy has unknown property: rulez/u
+  );
+});
+
+test('rejects unknown action controls through the single-action API', () => {
+  const actionWithTypo = {
+    id: 'a1',
+    type: 'message.send',
+    target: 'gmail',
+    fields: {},
+    outcomme: 'allowed'
+  };
+
+  assert.throws(
+    () => classifyAction(actionWithTypo, policy),
+    /Action has unknown property: outcomme/u
+  );
 });
 
 test('classifies all supported outcomes', () => {
