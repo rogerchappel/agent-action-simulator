@@ -15,6 +15,7 @@ Use this skill when an agent has a proposed connector/tool action plan and needs
   empty; missing or non-array `actions` values are rejected.
 - Approval-policy JSON with explicit, valid rules. Wildcards must occupy the
   entire type or target value, and `needs_approval` rules must name an approval.
+  Unknown top-level policy, rule, plan, and action controls are rejected.
 
 ## Side-effect boundaries
 

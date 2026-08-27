@@ -59,11 +59,14 @@ non-empty exact-string `id`, `type`, and `target` values. These values are not
 trimmed: leading or trailing whitespace makes the action malformed. When
 present, `fields` must be an object. Actions accept only `id`, `type`, `target`,
 and `fields`; unknown properties are rejected with the action index and property
-name before a report is emitted.
+name before a report is emitted. The exported `classifyAction` API enforces the
+same allowed action properties as plan simulation.
 
 ## Policy rules
 
-Each rule requires a non-empty `type`, `target`, and supported `outcome`.
+The policy object accepts only its required `rules` array; unknown top-level
+properties are rejected through both exported classification APIs. Each rule
+requires a non-empty `type`, `target`, and supported `outcome`.
 Rules accept only the properties `type`, `target`, `outcome`, `blockedFields`,
 `approval`, and `reason`; unknown properties are rejected with the rule index
 and property name so misspelled enforcement controls cannot be ignored.
