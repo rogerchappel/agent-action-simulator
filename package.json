@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Simulate planned connector actions and produce approval-boundary dry-run reports.",
   "type": "module",
+  "exports": "./src/index.js",
   "bin": {
     "agent-action-simulator": "./src/cli.js"
   },
