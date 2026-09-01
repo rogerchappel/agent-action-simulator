@@ -6,10 +6,9 @@ ship
 
 ## Verification plan
 
-- `npm test` - pass, 2 tests
-- `npm run check` - pass
-- `npm run smoke` - pass, markdown report covers all outcomes
-- `node src/cli.js fixtures/actions.json --policy fixtures/policy.json --format json` - pass
+- `npm run release:check` - pass; validates release readiness and syntax, runs the full automated test suite and source smoke, then packs a real tarball into a disposable directory
+- Package consumer smoke - pass; installs the tarball into a clean consumer with lifecycle scripts disabled, invokes the installed CLI's `--help` and `--version`, and imports every documented public export
+- Temporary package and consumer files are removed whether verification succeeds or fails
 
 ## Dry-run guarantees
 
