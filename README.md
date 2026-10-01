@@ -115,9 +115,10 @@ npm run release:check
 ```
 
 `npm run release:readiness` checks package metadata, the CLI bin target,
-support docs, release fixtures, the Node 20 and Node 26 CI matrix, and the npm
-files allowlist. Node 20 is the declared minimum runtime; Node 26 provides
-coverage on the current maintained release. Both CI jobs run the complete
-`npm run release:check` command.
+support docs, release fixtures, the Node 20 and Node 24 CI matrix, and the npm
+files allowlist. Node 20 is the declared minimum runtime; Node 24 provides
+coverage on the current LTS release. CI uses `npm ci` with the committed lockfile
+to install a reproducible dependency tree before running the full release
+checks. Both CI jobs run the complete `npm run release:check` command.
 `npm run package:smoke` dry-runs the npm tarball and fails if release-critical
 files would be omitted.
